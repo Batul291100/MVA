@@ -1,0 +1,81 @@
+---
+title: "Homework 1 - Bumpus sparrows"
+author: "Batul Khambata"
+date: "02/04/2023"
+output: html_document
+---
+### Importing data set
+```{r}
+library(readr)
+Bumpus_sparrows = read_csv("/Users/batul/Downloads/Bumpus_sparrows.csv")
+Bumpus_sparrows
+sparr = Bumpus_sparrows
+sparr
+
+#Inference
+#Correlation
+#Correlation between Keel Sernum and alar extent is higher in bumpus sparrows that didn't survive comapred to sparrows that survived
+
+```
+### Checking if there are null values in the dataset
+```{r}
+any(is.na(sparr))
+```
+### Splitting data depending on the Survivors and Non Survivors
+```{r}
+split_list = split(sparr, f = factor(sparr$Survivorship))
+Not_Survived = split_list[[1]]
+Survived = split_list[[2]]
+```
+### Dropping the first column
+```{r}
+NSur = Not_Survived[,-1]
+Sur=Survived[,-1]
+```
+### Calculating the Mean of each column for Survivors and Remnants
+```{r}
+colMeans(NSur)
+colMeans(Sur)
+```
+### Calculating the Covariance of each column for Survivors and Remnants
+```{r}
+NS_cov = cov(NSur, y=NULL, method = "pearson")
+NS_cov
+
+S_cov = cov(Sur, y=NULL, method = "pearson")
+S_cov
+```
+* Inference
+### Calculating the Correlation of each column for Survivors and Remnants
+```{r}
+NS_corr = cor(NSur, y=NULL,  method = "pearson")
+NS_corr
+S_corr = cor(Sur, y=NULL,  method = "pearson")
+S_corr
+```
+### Plotting a matrix for Correlation for Survivors and Remnants
+```{r}
+library(ggcorrplot)
+ggcorrplot(NS_corr, lab = TRUE)
+ggcorrplot(S_corr, lab = TRUE)
+```
+```{r}
+
+
+```
+
+### Box Plot
+```{r}
+
+ggplot(sparr,aes(y=Total_length, fill=Survivorship))+geom_boxplot()+ labs(title='Comparison between total length of Bumpus Sparrows')
+```
+
+### Inference
+
+* This boxplot shows the difference between total length in sparrows that survived versus sparrows that died. Overall, sparrows that survived were shorted than dead sparrows.
+* We can also see from the correlation matrix that there is a stronger relationship between alar extent and keel sternum for sparrows that dies and very weak relationship between alar extent and keel sternum for sparrows that survived.
+* We can conclude that higher sparrow body length results in less chances of survival of the Bumpus Sparrows. Similarly sparrows that are shorter have higher chances of survival.
+
+
+
+
