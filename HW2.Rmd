@@ -1,5 +1,5 @@
 ---
-title: "Homework 1 - Bumpus sparrows"
+title: "Homework 2 - Bumpus sparrows"
 author: "Batul Khambata"
 date: "02/12/2023"
 output: html_document
@@ -119,3 +119,6 @@ lastplot + theme_tufte()
 lastplot + theme_wsj()
 ```
 
+## Inference: 
+
+* We can see that in most of the plots that the outliers didn't survive and the survivors are converging towards the centre.
