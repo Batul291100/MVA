@@ -1,0 +1,557 @@
+---
+title: "Lung Cancer Analysis"
+output: html_document
+date: "2023-04-17"
+---
+### Exploratory Data Analysis
+```{r}
+library(readr)
+cancer <- read_csv("/Users/batul/Desktop/MVA/LUNGCANCER3.csv")
+str(cancer)
+attach(cancer)
+# Checking if there are null values in the dataset
+any(is.na(cancer))
+# Splitting data depending on the people diagnosed with lung cancer and Not diagnosed with lung cancer
+split_list = split(cancer, f = factor(cancer$LUNG_CANCER))
+No_Cancer = split_list[[1]]
+Yes_Cancer = split_list[[2]]
+# Dropping the first column
+NCan = No_Cancer[,-1]
+YCan=Yes_Cancer[,-1]
+# Calculating the Mean of each column for People diagnosed with and without lung cancer
+colMeans(NCan)
+colMeans(YCan)
+# Calculating the Covariance of each column for People diagnosed with and without lung cancer
+NC_cov = cov(NCan, y=NULL, method = "pearson")
+NC_cov
+YC_cov = cov(YCan, y=NULL, method = "pearson")
+YC_cov
+# Calculating the Correlation of each column for People diagnosed with and without lung cancer
+NC_corr = cor(NCan, y=NULL,  method = "pearson")
+NC_corr
+YC_corr = cor(YCan, y=NULL,  method = "pearson")
+YC_corr
+# Plotting a matrix for Correlation for People diagnosed with and without lung cancer
+library(ggcorrplot)
+ggcorrplot(NC_corr, lab = TRUE)
+ggcorrplot(YC_corr, lab = TRUE)
+#Boxplot
+ggplot(cancer,aes(y=AGE, fill=LUNG_CANCER))+geom_boxplot()+ labs(title='Comparison between age of people')
+#Load packages
+library(lattice)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+# GGplot
+ggplot(cancer, aes(x=WEIGHT,y=AGE)) + geom_point()
+ggplot(cancer, aes(x=WEIGHT,y=HEIGHT_INCH)) + facet_wrap(~LUNG_CANCER) + geom_point()
+ggplot(cancer, aes(x=HEIGHT_INCH, y=AGE)) +geom_point(aes(color=PEER_PRESSURE))
+ggplot(cancer, aes(x=HEIGHT_INCH,y=AGE)) + xlim(50,80) + geom_point(colour="steelblue", pch=3) + 
+  labs(x="HEIGHT IN INCHES", y="AGE", title="LUNG CANCER Data") 
+#Histogram
+ggplot(cancer, aes(AGE))+geom_histogram(bins=10)
+ggplot(cancer, aes(AGE))+geom_histogram(aes(fill = after_stat(count)))
+#Regression
+ggplot(cancer, aes(x=WEIGHT, y=AGE)) + geom_point() + geom_smooth(method=lm)
+ggplot(cancer, aes(x=HEIGHT_INCH, y=AGE)) + geom_point() + stat_smooth()
+#Violin Plot
+ggplot(cancer, aes(x=LUNG_CANCER, y=AGE)) + geom_violin()
+ggplot(cancer, aes(x=LUNG_CANCER, y=WEIGHT)) + geom_violin()
+ggplot(cancer, aes(x=LUNG_CANCER, y=HEIGHT_INCH)) + geom_violin()
+#Boxplot
+ggplot(cancer, aes(x=LUNG_CANCER, y=WEIGHT)) + geom_boxplot()
+ggplot(cancer, aes(x=LUNG_CANCER, y=WEIGHT)) + geom_boxplot() + coord_flip()
+#Density Plot and ggridges
+ggplot(cancer, aes(x=AGE)) + geom_density() 
+ggplot(cancer, aes(x=AGE, fill=LUNG_CANCER, color=LUNG_CANCER)) + geom_density() 
+ggplot(cancer, aes(x=AGE, fill=LUNG_CANCER, color=LUNG_CANCER)) + geom_density(alpha=0.3, aes(y=..scaled..)) 
+
+#Hexbin
+ggplot(cancer, aes(x=HEIGHT_INCH, y=AGE)) + geom_hex()
+
+```
+
+# PCA
+```{r}
+library(readr)
+cancer <- read_csv("/Users/batul/Desktop/MVA/LUNGCANCER3.csv")
+str(cancer)
+attach(cancer)
+
+#Load packages
+library(lattice)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+
+# Using prcomp to compute the principal components (eigenvalues and eigenvectors). With scale=TRUE, variable means are set to zero, and variances set to one
+cancer_pca <- prcomp(cancer[,-1],scale=TRUE)
+cancer_pca
+summary(cancer_pca)
+#* Standard deviation: The standard deviation indicates how much of the variance in the original data is captured by each principal component. The first principal component (PC1) has the highest standard deviation of 1.6925, which means it accounts for the most variation in the original data. As we move down the list of principal components, the standard deviation decreases, indicating that each subsequent component captures less and less of the overall variation.
+
+#* Proportion of variance: The proportion of variance indicates the amount of variance in the original data that is explained by each principal component. For example, the first principal component (PC1) explains 16.85% of the total variance in the data, while the second component (PC2) explains an additional 11.52% of the variance. As we move down the list of principal components, the proportion of variance explained by each component tends to decrease.
+
+#* Cumulative proportion: The cumulative proportion indicates the total amount of variance in the data that is explained by each principal component and all of the preceding components. For example, the first principal component (PC1) captures 16.85% of the variance in the data, while PC1 and PC2 together capture 28.37% of the variance. The cumulative proportion can be useful in determining how many principal components to retain for further analysis.
+
+
+# sample scores stored in cancer_pca$x
+# singular values (square roots of eigenvalues) stored in cancer_pca$sdev
+# loadings (eigenvectors) are stored in cancer_pca$rotation
+# variable means stored in cancer_pca$center
+# variable standard deviations stored in cancer_pca$scale
+# A table containing eigenvalues and %'s accounted, follows
+# Eigenvalues are sdev^2
+(eigen_cancer <- cancer_pca$sdev^2)
+
+names(eigen_cancer) <- paste("PC",1:17,sep="")
+eigen_cancer
+# The number 2.8645733 in the first row and first column means that the first principal component explains 2.8645733 units of variance in the data. The number 0.2769370 in the last row means that the 17th principal component explains 0.2769370 units of variance in the data. We can see that the first 7 principal components explain a cumulative proportion of variance of 0.66548, so we might choose to retain those 7 components.
+
+sumlambdas <- sum(eigen_cancer)
+sumlambdas
+propvar <- eigen_cancer/sumlambdas
+propvar
+# The values indicate that PC1 explains the most variance at 16.85%, followed by PC2 at 11.52%, PC3 at 9.93%, and so on, down to PC17 at 1.63%. These values indicate how much information each principal component carries and can help in determining which components are most relevant for analysis. In this case we can take 7 components for our analysis
+cumvar_cancer <- cumsum(propvar)
+cumvar_cancer
+# Here, PC1 alone explains 16.85% of the variance, while the first two principal components combined (PC1 and PC2) explain 28.37% of the variance, and so on. This cumulative proportion of variance can be useful for determining how many principal components to include in further analysis. We can see that the first 7 principal components explain around 71.79% of the total variance. 
+
+matlambdas <- rbind(eigen_cancer,propvar,cumvar_cancer)
+rownames(matlambdas) <- c("Eigenvalues","Prop. variance","Cum. prop. variance")
+round(matlambdas,4)
+
+# Here, the first PC has an eigenvalue of 2.8646, which explains 16.85% of the total variance in the data. The first two PCs combined explain 28.37% of the variance, and the first seven PCs combined explain 71.79% of the variance.
+
+summary(cancer_pca)
+cancer_pca$rotation
+print(cancer_pca)
+# The numbers indicate the correlation between each variable and each principal component.For example, in the second table, the variable "SMOKING" has a loading of 0.043 on PC1, -0.003 on PC2, -0.316 on PC3, and 0.108 on PC4. This suggests that "SMOKING" is most strongly correlated with PC3 and weakly correlated with the other PCs. Similarly, "WEIGHT" is strongly correlated with PC3 and negatively correlated with PC4. 
+
+## Sample scores stored in cancer_pca$x
+cancer_pca$x
+# Identifying the scores by their survival status
+cancerp_pca <- cbind(data.frame(LUNG_CANCER),cancer_pca$x)
+cancerp_pca
+# Means of scores for all the PC's classified by Survival status
+tabmeansPC <- aggregate(cancerp_pca[,2:15],by=list(LUNG_CANCER=cancer$LUNG_CANCER),mean)
+tabmeansPC
+# The output shows that for most of the principal components (PC2 to PC14), the mean scores are higher for the non-survivors compared to the survivors. However, for PC1, the mean score is higher for the survivors compared to the non-survivors.This suggests that the first principal component may be particularly important in differentiating between survivors and non-survivors of lung cancer. The other principal components may also provide some information on differences between the two groups, but their importance may be more limited.
+
+tabmeansPC <- tabmeansPC[rev(order(tabmeansPC$LUNG_CANCER)),]
+tabmeansPC
+#This output is useful for comparing the mean scores of the different principal components based on the survival status of the patients. The negative values for some of the principal components suggest that these components have an inverse relationship with the survival status of the patients.
+
+tabfmeans <- t(tabmeansPC[,-1])
+tabfmeans
+#The rows represent each of the PCs and the columns represent the two groups. For example, the first row represents the mean values of PC1 for both groups. The value in the first row and second column (-0.048196210) indicates that the mean value of PC1 for the group classified as 2 is negative and smaller than the mean value of PC1 for the group classified as 1, which is represented by the value in the first row and first column (0.33366607).
+colnames(tabfmeans) <- t(as.vector(tabmeansPC[1]$LUNG_CANCER))
+tabfmeans
+# Standard deviations of scores for all the PC's classified by Survival status
+tabsdsPC <- aggregate(cancerp_pca[,2:15],by=list(LUNG_CANCER=cancer$LUNG_CANCER),sd)
+tabfsds <- t(tabsdsPC[,-1])
+colnames(tabfsds) <- t(as.vector(tabsdsPC[1]$LUNG_CANCER))
+tabfsds
+t.test(PC1~cancer$LUNG_CANCER,data=cancerp_pca)
+t.test(PC2~cancer$LUNG_CANCER,data=cancerp_pca)
+t.test(PC3~cancer$LUNG_CANCER,data=cancerp_pca)
+t.test(PC4~cancer$LUNG_CANCER,data=cancerp_pca)
+t.test(PC5~cancer$LUNG_CANCER,data=cancerp_pca)
+# The output shows that the p-value is 0.07939, which is above the significance level of 0.05, indicating that we cannot reject the null hypothesis of no difference in means between the two groups at the 5% significance level for PC1. Similarly we can do this for other PC's as well. 
+
+plot(eigen_cancer, xlab = "Component number", ylab = "Component variance", type = "l", main = "Scree diagram")
+plot(log(eigen_cancer), xlab = "Component number",ylab = "log(Component variance)", type="l",main = "Log(eigenvalue) diagram")
+print(summary(cancer_pca))
+#The first three PCs (PC1, PC2, and PC3) account for a total of 38.5% of the variance in the data. The first seven PCs (PC1-PC7) together explain 66.5% of the variance, and the first 14 PCs explain 94.1% of the variance. Therefore, it appears that most of the variance in the data is captured by the first few PCs. The summary also indicates that the standard deviation of each PC decreases as the PC index increases. This means that the amount of variation explained by each PC decreases as the index increases. The proportion of variance and cumulative proportion of each PC follow a similar pattern.
+cancer_pca$x
+plot(cancer_pca)
+
+#get the original value of the data based on PCA
+center <- cancer_pca$center
+scale <- cancer_pca$scale
+new_cancer <- as.matrix(cancer[,-1])
+new_cancer
+drop(scale(new_cancer,center=center, scale=scale)%*%cancer_pca$rotation[,1])
+predict(cancer_pca)[,1]
+#The aboved two gives us the same thing. predict is a good function to know.
+cancer$LUNG_CANCER <- as.factor(cancer$LUNG_CANCER)
+out <- sapply(1:5, function(i){plot(cancer$LUNG_CANCER,cancer_pca$x[,i],xlab=paste("PC",i,sep=""),ylab="LUNG CANCER")})
+
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(devtools)
+
+fviz_eig(cancer_pca, addlabels = TRUE)
+# In this scree plot, we will consider the first 7 PC's as it explains almost 70% of the variance in the dataset.
+fviz_pca_var(cancer_pca,col.var = "cos2",
+             gradient.cols = c("#FFCC00", "#CC9933", "#660033", "#330033"),
+             repel = TRUE)
+# The graph is a visualization of the principal components of a PCA analysis. Each point on the plot represents a variable in the original dataset, and the position of the point represents the contribution of the variable to the principal components. The size of the point represents the variability explained by the variable, and the color represents the squared cosine of the variable, which indicates the correlation between the variable and the principal component. The gradient of colors indicates the strength of the correlation, with darker colors indicating stronger correlation. From this graph, we can identify which variables are most important in explaining the variation in the data, and which variables are most strongly correlated with each principal component.Here, alcohol consumption, swallowing difficulty, anxiety, yellow fingers, chest pain, shortness of breath are some of the variables 
+
+# Different PCA Method. 
+res.pca <- PCA(cancer[,-1], graph = FALSE)
+print(res.pca)
+
+# Visualize and Interpret PCA using these functions 
+
+#get_eigenvalue(res.pca): Extract the eigenvalues/variances of principal components
+#fviz_eig(res.pca): Visualize the eigenvalues
+#get_pca_ind(res.pca), get_pca_var(res.pca): Extract the results for individuals and variables, respectively.
+#fviz_pca_ind(res.pca), fviz_pca_var(res.pca): Visualize the results individuals and variables, respectively.
+#fviz_pca_biplot(res.pca): Make a biplot of individuals and variables.
+
+eig.val <- get_eigenvalue(res.pca)
+eig.val
+
+fviz_eig(res.pca, addlabels = TRUE, ylim = c(0, 20))
+
+
+fviz_pca_ind(res.pca,
+             geom.ind = "point", # show points only (nbut not "text")
+             col.ind = cancer$LUNG_CANCER, # color by groups
+             palette = c("#00AFBB", "#E7B800", "#FC4E07"),
+             addEllipses = TRUE, # Concentration ellipses
+             legend.title = "Groups"
+             )
+#Each ellipse represents the range of scores for each group in the first two principal components. The center of the ellipse represents the centroid of each group in the first two principal components.If the ellipses of two groups overlap significantly, it means that they have similar scores in the first two principal components, and thus are not easily distinguishable based on those components. On the other hand, if the ellipses of two groups do not overlap, it means that they have different scores in the first two principal components, and thus are easily distinguishable based on those components. In the graph, some part of the ellipse is overlapping while some part isn't. So, some of the scores for PC1 and PC2 are same while some are different. 
+
+
+res.desc <- dimdesc(res.pca, axes = c(1,2,3,4,5), proba = 0.05)
+
+
+fviz_pca_biplot(res.pca, 
+                # Individuals
+                geom.ind = "point",
+                fill.ind = cancer$LUNG_CANCER, col.ind = "black",
+                pointshape = 21, pointsize = 2,
+                palette = "jco",
+                addEllipses = TRUE,
+                # Variables
+                alpha.var ="contrib", col.var = "contrib",
+                gradient.cols = "RdYlBu",
+                
+                legend.title = list(fill = "LUNG CANCER", color = "Contrib",
+                                    alpha = "Contrib")
+                )
+# Here we can underrstand that the closer the variables are to a principal component, the stronger the relationship. Variables that are close together on the biplot are positively correlated, while variables that are far apart are negatively correlated. Here, peer pressure, anxiety, swallowing difficulty, yellow fingers are strongly correlated with each other. Also, chest pain, allergy, wheezing and coughing are correlated to each other. These can be considered as some of the important factors that affect lung cancer.
+```
+# Logistic Regression
+```{r}
+library(ggplot2)
+library(readr)
+library(cowplot)
+#library(regclass)
+#library(caret)
+library(e1071)
+library(pROC)
+data <- read_csv("/Users/batul/Desktop/MVA/LUNGCANCER3.csv")
+
+data$SMOKING <- as.factor(data$SMOKING)
+data$YELLOW_FINGERS <- as.factor(data$YELLOW_FINGERS)
+data$ANXIETY <- as.factor(data$ANXIETY)
+data$PEER_PRESSURE <- as.factor(data$PEER_PRESSURE)
+data$FATIGUE <- as.factor(data$FATIGUE)
+data$ALLERGY <- as.factor(data$ALLERGY)
+data$AGE <- as.integer(data$AGE)
+data$WHEEZING <- as.factor(data$WHEEZING)
+data$ALCOHOL_CONSUMING <- as.integer(data$ALCOHOL_CONSUMING)
+data$COUGHING <- as.factor(data$COUGHING)
+data$SHORTNESS_OF_BREATH <- as.factor(data$SHORTNESS_OF_BREATH)
+data$SWALLOWING_DIFFICULTY <- as.factor(data$SWALLOWING_DIFFICULTY)
+data$CHEST_PAIN <- as.factor(data$CHEST_PAIN)
+data$WEIGHT <- as.factor(data$WEIGHT)
+data$HEIGHT_INCH <- as.factor(data$HEIGHT_INCH)
+data$CHRONIC_DISEASE <- as.factor(data$CHRONIC_DISEASE)
+
+
+## Exploratory Analysis
+
+xtabs(~ LUNG_CANCER + SMOKING, data=data)
+# There are 19 observations that are non-smokers and do not have lung cancer, 20 observations that are non-smokers and have lung cancer, 155 observations that are smokers and do not have lung cancer, and 115 observations that are smokers and have lung cancer. This information can be useful to understand the relationship between smoking and lung cancer and to understand if there is a significant association between the two variables. Similarly, we can get a table for other variables like anxiety, fatigue etc and understand if there is a significant association between those variables. 
+xtabs(~ LUNG_CANCER + YELLOW_FINGERS, data=data)
+xtabs(~ LUNG_CANCER + ANXIETY, data=data)
+xtabs(~ LUNG_CANCER + PEER_PRESSURE, data=data)
+xtabs(~ LUNG_CANCER + FATIGUE, data=data)
+xtabs(~ LUNG_CANCER + ALLERGY, data=data)
+xtabs(~ LUNG_CANCER + WHEEZING, data=data)
+xtabs(~ LUNG_CANCER + ALCOHOL_CONSUMING, data=data)
+xtabs(~ LUNG_CANCER + COUGHING, data=data)
+xtabs(~ LUNG_CANCER + SHORTNESS_OF_BREATH, data=data)
+xtabs(~ LUNG_CANCER + SWALLOWING_DIFFICULTY, data=data)
+xtabs(~ LUNG_CANCER + CHEST_PAIN, data=data)
+xtabs(~ LUNG_CANCER + CHRONIC_DISEASE, data=data)
+
+logistic_simple <- glm(LUNG_CANCER ~ SMOKING, data=data, family="binomial")
+summary(logistic_simple)
+#The slope estimate for SMOKING 1 is -0.3498, indicating that for every one-unit increase in SMOKING (i.e., from 0 to 1), the log odds of LUNG_CANCER decreases by 0.3498 units. The p-value for SMOKING 1 is 0.308, which is not statistically significant at the conventional alpha level of 0.05. The residual deviance is 233.26 on 307 degrees of freedom, indicating that the model provides a good fit to the data. The AIC value of 237.26 suggests that this simple logistic model is a good fit for predicting the probability of LUNG CANCER based on SMOKING.
+
+## Lastly, let's  see what this logistic regression predicts, given
+
+predicted.data <- data.frame(probability.of.ld=logistic_simple$fitted.values,SMOKING=data$SMOKING)
+predicted.data
+## We can plot the data...
+
+xtabs(~ probability.of.ld + SMOKING, data=predicted.data)
+# There are 135 individuals predicted to have a probability of 0.851851851851851 of lung cancer who are non-smokers, and there are 174 individuals predicted to have a probability of 0.890804597474673 of lung cancer who are smokers. This output can be used to evaluate the performance of a binary logistic regression model that was used to predict the probability of lung cancer based on smoking status.
+logistic <- glm(LUNG_CANCER ~ ., data=data, family="binomial")
+summary(logistic)
+## Now calculate the overall "Pseudo R-squared" and its p-value
+ll.null <- logistic$null.deviance/-2
+ll.proposed <- logistic$deviance/-2
+(ll.null - ll.proposed) / ll.null
+## The p-value for the R^2
+1 - pchisq(2*(ll.proposed - ll.null), df=(length(logistic$coefficients)-1))
+predicted.data <- data.frame(probability.of.ld=logistic$fitted.values,LUNG_CANCER=data$LUNG_CANCER)
+predicted.data <- predicted.data[order(predicted.data$probability.of.ld, decreasing=FALSE),]
+predicted.data$rank <- 1:nrow(predicted.data)
+## Lastly, we can plot the predicted probabilities for each sample having
+## heart disease and color by whether or not they actually had heart disease
+ggplot(data=predicted.data, aes(x=rank, y=probability.of.ld)) +
+geom_point(aes(color=LUNG_CANCER), alpha=1, shape=4, stroke=2) +
+xlab("Index") +
+ylab("Predicted probability of getting lung cancer")
+
+# From Caret
+pdata <- predict(logistic,newdata=data,type="response" )
+pdata
+data$LUNG_CANCER
+pdataF <- as.factor(ifelse(test = as.numeric(pdata > 0.5) == 0, "Healthy", "Unhealthy"))
+
+#From e1071::
+#confusionMatrix(pdataF, data$LUNG_CANCER)
+# From pROC
+roc(data$LUNG_CANCER,logistic$fitted.values,plot=TRUE)
+par(pty = "s")
+roc(data$LUNG_CANCER,logistic$fitted.values,plot=TRUE)
+
+## NOTE: By default, roc() uses specificity on the x-axis and the values range
+## from 1 to 0. This makes the graph look like what we would expect, but the
+## x-axis itself might induce a headache. To use 1-specificity (i.e. the
+## False Positive Rate) on the x-axis, set "legacy.axes" to TRUE.
+roc(data$LUNG_CANCER,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE)
+roc(data$LUNG_CANCER,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage")
+
+roc(data$LUNG_CANCER,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#377eb8", lwd=4)
+roc(data$LUNG_CANCER,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#377eb8", lwd=4)
+## If we want to find out the optimal threshold we can store the
+## data used to make the ROC graph in a variable...
+roc.info <- roc(data$LUNG_CANCER, logistic$fitted.values, legacy.axes=TRUE)
+str(roc.info)
+## tpp = true positive percentage
+## fpp = false positive precentage
+roc.df <- data.frame(tpp=roc.info$sensitivities*100, fpp=(1 - roc.info$specificities)*100,thresholds=roc.info$thresholds)
+roc.df
+head(roc.df) 
+## head() will show us the values for the upper right-hand corner of the ROC graph, when the threshold is so low
+## (negative infinity) that every single sample is called "obese".
+## Thus TPP = 100% and FPP = 100%
+tail(roc.df) 
+## tail() will show us the values for the lower left-hand corner
+## of the ROC graph, when the threshold is so high (infinity)
+## that every single sample is called "not obese".
+## Thus, TPP = 0% and FPP = 0%
+## now let's look at the thresholds between TPP 60% and 80%
+roc.df[roc.df$tpp > 60 & roc.df$tpp < 80,]
+roc(data$LUNG_CANCER,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#377eb8", lwd=4, percent=TRUE)
+roc(data$LUNG_CANCER,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#377eb8", lwd=4, percent=TRUE, print.auc=TRUE)
+roc(data$LUNG_CANCER,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#377eb8", lwd=4, percent=TRUE, print.auc=TRUE, partial.auc=c(100, 90), auc.polygon = TRUE, auc.polygon.col = "#377eb822", print.auc.x=45)
+# Lets do two roc plots to understand which model is better
+roc(data$LUNG_CANCER, logistic_simple$fitted.values, plot=TRUE, legacy.axes=TRUE, percent=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#377eb8", lwd=4, print.auc=TRUE)
+# Lets add the other graph
+plot.roc(data$LUNG_CANCER, logistic$fitted.values, percent=TRUE, col="#4daf4a", lwd=4, print.auc=TRUE, add=TRUE, print.auc.y=40)
+legend("bottomright", legend=c("Simple", "Non Simple"), col=c("#377eb8", "#4daf4a"), lwd=4) 
+
+# The simple line on the graph is generated when the model is a random classifier, which means that it predicts classes at random. The non-simple line on the graph is generated when the model is a non-random classifier, which means that it makes informed predictions based on the features of the data.The TPP is the percentage of actual positive instances that the model correctly identifies as positive, while the FPP is the percentage of actual negative instances that the model incorrectly identifies as positive. An AUC of 100% for the non-simple line indicates that it has correctly classified all the samples in the dataset, while an AUC of 54.3% for the simple line indicates that it has not performed much better than randomly assigning class labels. This suggests that the non-simple line is a more reliable classifier than the simple line for this particular dataset. This means that the non-simple model captures more of the variation in the data and provides better discrimination between the two classes. Therefore, the goal to accurately classify data, the non-simple model would be preferred over the simple model.
+library(readr)
+library(MVA)
+library(HSAUR2)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(Hotelling)
+library(stats)
+library(biotools)
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(stringr)
+library(ellipse)
+library(ggplot2)
+library(reshape2)
+library(caret)
+library(pROC)
+library(cluster)
+library(factoextra)
+library(psych)
+
+
+```
+
+# EFA
+```{r}
+# Factor Analysis
+
+library(psych)
+library(readr)
+data <- read_csv("/Users/batul/Desktop/MVA/LUNGCANCER3.csv")
+
+attach(data)
+data[1]
+fit.pc <- principal(data[-1], nfactors=7, rotate="varimax")
+fit.pc
+round(fit.pc$values, 3)
+fit.pc$loadings
+#The loadings table shows how strongly each item is associated with each factor, with larger absolute values indicating stronger associations. For example, in the first row we see that GENDER has a loading of 0.238 on the first factor (RC1), -0.608 on the fifth factor (RC5), 0.209 on the second factor (RC2), and no significant loading on the other factors.
+# Loadings with more digits
+for (i in c(1,3,2,4,5,6,7)) { print(fit.pc$loadings[[1,i]])}
+# Communalities
+fit.pc$communality
+# The variable GENDER, the communality estimate is 0.6304266. This means that 63.04% of the variance in GENDER is accounted for by the factors in the analysis. Similarly, for AGE, the communality estimate is 0.6770701, which means that 67.71% of the variance in AGE is accounted for by the factors.
+# Rotated factor scores, Notice the columns ordering: RC1, RC3, RC2 and RC4
+fit.pc$scores
+# Play with FA utilities
+
+fa.parallel(data[-1]) # See factor recommendation
+# Parallel analysis in scree plots is used to help determine the optimal number of factors/components to retain in a factor analysis by comparing the eigenvalues obtained from the data to those obtained from randomly generated data sets. Here the ideal number of factors to be considered are 7.
+fa.plot(fit.pc) # See Correlations within Factors
+fa.diagram(fit.pc) # Visualize the relationship
+vss(data[-1]) # See Factor recommendations for a simple structure
+
+
+
+
+# Computing Correlation Matrix
+corrm.emp <- cor(data[-1])
+corrm.emp
+plot(corrm.emp)
+data_pca <- prcomp(data[-1], scale=TRUE)
+summary(data_pca)
+plot(data_pca)
+# A table containing eigenvalues and %'s accounted, follows. Eigenvalues are the sdev^2
+(eigen_data <- round(data_pca$sdev^2,3))
+round(fit.pc$values, 3)
+names(eigen_data) <- paste("PC",1:17,sep="")
+eigen_data
+sumlambdas <- sum(eigen_data)
+sumlambdas
+propvar <- round(eigen_data/sumlambdas,2)
+propvar
+cumvar_data <- cumsum(propvar)
+cumvar_data
+matlambdas <- rbind(eigen_data,propvar,cumvar_data)
+matlambdas
+rownames(matlambdas) <- c("Eigenvalues","Prop. variance","Cum. prop. variance")
+rownames(matlambdas)
+eigvec.emp <- data_pca$rotation
+print(data_pca)
+# Taking the first four PCs to generate linear combinations for all the variables with four factors
+pcafactors.emp <- eigvec.emp[,1:7]
+pcafactors.emp
+# Multiplying each column of the eigenvector’s matrix by the square-root of the corresponding eigenvalue in order to get the factor loadings
+unrot.fact.emp <- sweep(pcafactors.emp,MARGIN=2,data_pca$sdev[1:7],`*`)
+unrot.fact.emp
+# Computing communalities
+communalities.emp <- rowSums(unrot.fact.emp^2)
+communalities.emp
+# Performing the varimax rotation. The default in the varimax function is norm=TRUE thus, Kaiser normalization is carried out
+rot.fact.emp <- varimax(unrot.fact.emp)
+#View(unrot.fact.emp)
+rot.fact.emp
+# The print method of varimax omits loadings less than abs(0.1). In order to display all the loadings, it is necessary to ask explicitly the contents of the object $loadings
+fact.load.emp <- rot.fact.emp$loadings[1:17,1:7]
+fact.load.emp
+# Computing the rotated factor scores for the 30 European Countries. Notice that signs are reversed for factors F2 (PC2), F3 (PC3) and F4 (PC4)
+scale.emp <- scale(data[-1])
+scale.emp
+#as.matrix(scale.emp) %*% fact.load.emp %*% solve(t(fact.load.emp) %*% fact.load.emp + diag(ncol(fact.load.emp)))
+
+```
+# Cluster Analysis
+```{r}
+library(cluster)
+library(readr)
+library(factoextra)
+library(magrittr)
+library(NbClust)
+
+lung <- read.csv("/Users/batul/Desktop/MVA/LUNGCANCER3.csv")
+lung
+matstd.lung <- scale(lung)
+lung_scaled <- scale(lung)
+attach(lung)
+dim(lung)
+str(lung)
+lung$LUNG_CANCER <- as.factor(lung$LUNG_CANCER)
+str(lung)
+
+# Lets see what the optimal numbers of clusers are
+# Compute
+res.nbclust <- lung_scaled %>% scale() %>% NbClust(distance = "euclidean", min.nc = 2, max.nc = 10, method = "complete", index ="all") 
+
+# Perform k-means clustering with 3 clusters
+set.seed(123)
+k3 <- kmeans(lung_scaled, centers = 3, nstart = 25)
+
+# Visualize the clustering results with a scatter plot
+fviz_cluster(k3, data = lung_scaled)
+
+# Determine the optimal number of clusters using the elbow method
+fviz_nbclust(lung_scaled, kmeans, method = "wss")
+# Assign cluster labels to the original dataset
+lung$cluster <- as.factor(k3$cluster)
+lung$cluster
+
+# Hierarchial Clusiering
+res.hc <- lung_scaled %>% scale() %>% dist(method = "euclidean") %>%
+  hclust(method = "ward.D2")
+
+fviz_dend(res.hc, k = 3, # Cut in three groups
+          cex = 0.5, # label size
+          k_colors = c("#2E9FDF", "#E7B800", "#FC4E07"),
+          color_labels_by_k = TRUE, # color labels by groups
+          rect = TRUE # Add rectangle around groups
+          )
+
+
+
+
+```
+
+
